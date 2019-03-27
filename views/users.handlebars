@@ -1,0 +1,63 @@
+<div class="row">
+  <div class="col-3">
+    <img src="{{profile.avatar}}" width="150" height="150" />
+    <h3>{{profile.Tweet.name}}</h3>
+    <p>{{profile.introduction}}</p>
+    <ul>
+      <li><a href="/users/{{profile.id}}/tweets">Tweets: {{profile.Tweets.length}}</a></li>
+      <li><a href="/users/{{profile.id}}/followings">Following: {{profile.Following.length}}</a></li>
+      <li><a href="/users/{{profile.id}}/followers">Follower: {{profile.Follower.length}}</a></li>
+      <li><a href="/users/{{profile.id}}/likes">like: {{profile.Likes.length}}</a></li>
+    </ul>
+    <div>
+      {{#if selfUser}}
+        <a href="/users/{{user.id}}/edit"><button class="btn btn-primary">Edit Profile</button></a>
+      {{else}}
+        {{#if profile.isFollowed }}
+          <form action="/followships/{{profile.id}}?_method=DELETE" method="POST" style="display: contents;"><button type="submit" class="btn btn-danger">取消追蹤</button></form>
+        {{else}}
+          <form action="/followships" method="POST" style="display: contents;"><input type="hidden" name="id" value="{{profile.id}}"><button type="submit" class="btn btn-primary">追蹤</button></form>
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+  <div class="col-7">
+    {{#each profile.Tweets}}
+    <div class="card" style="margin: 20px 0;">
+      <div class="row no-gutters">
+        <div class="col-md-4">
+          <img src="{{this.User.avatar}}" class="card-img" alt="..." style="width: 150px; height: 150px;">
+        </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <h5 class="card-title">
+              <a href="/users/{{this.UserId}}/tweets">
+                {{this.User.name}}
+              </a>
+            </h5>
+            <p class="card-text">{{this.description}}</p>
+            <p class="card-text"><small class="text-muted">{{this.createdAt}}</small></p>
+
+            <div style="display: flex;">
+              <a href="/tweets/{{this.id}}/replies">
+                <button type="submit" class="btn btn-link">Reply ({{this.Replies.length}})</button>
+              </a>
+              {{#if this.isLiked}}
+                <form action="/tweets/{{this.id}}/unlike" method="POST">
+                  <button type="submit" class="btn btn-link">Unlike ({{this.Likes.length}})</button>
+                </form>
+              {{else}}
+                <form action="/tweets/{{this.id}}/likes" method="POST">
+                  <button type="submit" class="btn btn-link">Like ({{this.Likes.length}})</button>
+                </form>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</div>
+
+

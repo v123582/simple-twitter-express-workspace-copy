@@ -1,0 +1,25 @@
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Name</th>
+      <th scope="col">Tweets</th>
+      <th scope="col">Following</th>
+      <th scope="col">Follower</th>
+      <th scope="col">Likes</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each users}}
+    <tr>
+      <th scope="row">1</th>
+      <td>{{this.name}}</td>
+      <td>{{this.Tweets.length}}</td>
+      <td>{{this.Following.length}}</td>
+      <td>{{this.Follower.length}}</td>
+      <td>{{this.Likes.length}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
