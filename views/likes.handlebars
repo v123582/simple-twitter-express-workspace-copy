@@ -1,0 +1,60 @@
+
+<div class="row">
+  <div class="col-3">
+    <img src="{{user.avatar}}" width="120" />
+    <h3>{{user.name}}</h3>
+    <p>{{user.introduction}}</p>
+    <ul>
+      <li><a href="/users/{{user.id}}/tweets">Tweets: {{user.Tweets.length}}</a></li>
+      <li><a href="/users/{{user.id}}/followings">Following: {{user.Following.length}}</a></li>
+      <li><a href="/users/{{user.id}}/followers">Follower: {{user.Follower.length}}</a></li>
+      <li><a href="/users/{{user.id}}/likes">like: {{user.Likes.length}}</a></li>
+    </ul>
+    <div>
+      {{#if selfUser}}
+        <a href="/users/{{user.id}}/edit"><button class="btn btn-primary">Edit Profile</button></a>
+      {{else}}
+        <div></div>
+      {{/if}}
+    </div>
+  </div>
+  <div class="col-7">
+    {{#each user.Likes}}
+      <div class="card" style="margin: 20px 0;">
+        <div class="row no-gutters">
+          <div class="col-md-4">
+            <img src="{{this.Tweet.User.avatar}}" class="card-img" alt="..." style="width: 150px; height: 150px;">
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <h5 class="card-title">
+                <a href="/users/{{this.UserId}}/tweets">
+                  {{this.Tweet.User.name}}
+                </a>
+              </h5>
+              <p class="card-text">{{this.Tweet.description}}</p>
+              <p class="card-text"><small class="text-muted">{{this.Tweet.createdAt}}</small></p>
+
+              <div style="display: flex;">
+                <a href="/tweets/{{this.id}}/replies">
+                  <button type="submit" class="btn btn-link">Reply ({{this.Tweet.Replies.length}})</button>
+                </a>
+                {{#if this.Tweet.isLiked}}
+                  <form action="/tweets/{{this.Tweet.id}}/unlike" method="POST">
+                    <button type="submit" class="btn btn-link">Unlike ({{this.Tweet.Likes.length}})</button>
+                  </form>
+                {{else}}
+                  <form action="/tweets/{{this.Tweet.id}}/likes" method="POST">
+                    <button type="submit" class="btn btn-link">Like ({{this.Tweet.Likes.length}})</button>
+                  </form>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+</div>
+
+
