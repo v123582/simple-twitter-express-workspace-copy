@@ -48,7 +48,7 @@ const authenticated = (req, res, next) => {
 }
 
 app.get('/tweets', authenticated, function (req, res) {
-  console.log('\n\n* 看見站內所有的推播，以及跟隨者最多的使用者（設為前台首頁）')
+  // console.log('\n\n* 看見站內所有的推播，以及跟隨者最多的使用者（設為前台首頁）')
   const UserId = helpers.getUser(req).id
   return Tweet.findAll({include: [User, Reply, Like]}).then(tweets => {
     User.findAll({include: {model: User, as: 'Follower'}}).then(users => {
@@ -70,7 +70,9 @@ app.get('/tweets', authenticated, function (req, res) {
   })
 })
 app.post('/tweets', authenticated, function (req, res) {
-  console.log('\n\n* 將新增的推播寫入資料庫')
+  // console.log('\n\n* 將新增的推播寫入資料庫')
+  if(req.body.description.length > 140)
+    return res.redirect('/tweets')
   Tweet.create({
     description: req.body.description,
     UserId: helpers.getUser(req).id,
@@ -79,7 +81,7 @@ app.post('/tweets', authenticated, function (req, res) {
   })
 })
 app.get('/tweets/:tweet_id/replies', authenticated, function (req, res) {
-  console.log('\n\n* 可以在這頁回覆特定的 tweet，並看見 tweet 主人的簡介')
+  // console.log('\n\n* 可以在這頁回覆特定的 tweet，並看見 tweet 主人的簡介')
   const UserId = helpers.getUser(req).id
   return Tweet.findByPk(req.params.tweet_id, {include: [
     {model: User, include: [
@@ -104,7 +106,7 @@ app.get('/tweets/:tweet_id/replies', authenticated, function (req, res) {
   })
 })
 app.post('/tweets/:tweet_id/replies', authenticated, function (req, res) {
-  console.log('\n\n* 將回覆的內容寫入資料庫')
+  // console.log('\n\n* 將回覆的內容寫入資料庫')
   Reply.create({
     comment: req.body.comment,
     TweetId: req.params.tweet_id,
@@ -114,7 +116,7 @@ app.post('/tweets/:tweet_id/replies', authenticated, function (req, res) {
   })
 })
 app.get('/users/:id/tweets', authenticated, function (req, res) {
-  console.log('\n\n* 看見某一使用者的推播牆，以及該使用者簡介')
+  // console.log('\n\n* 看見某一使用者的推播牆，以及該使用者簡介')
   const UserId = helpers.getUser(req).id
   return User.findByPk(req.params.id, {include: [
     { model: Tweet, include: [User, Reply, Like]},
@@ -137,11 +139,11 @@ app.get('/users/:id/tweets', authenticated, function (req, res) {
   })
 })
 app.get('/users/:id/followings', authenticated, function (req, res) {
-  console.log('\n\n* 看見某一使用者正在關注的使用者')
+  // console.log('\n\n* 看見某一使用者正在關注的使用者')
   return User.findByPk(req.params.id, {include: [
     { model: Tweet },
-    { model: User, as: 'Follower' },
-    { model: User, as: 'Following' }, 
+    { model: User, as: 'Follower', order: 'createdAt asc' },
+    { model: User, as: 'Following', order: 'createdAt asc' }, 
     Like
   ]}).then(user => {
     user = {
@@ -151,14 +153,14 @@ app.get('/users/:id/followings', authenticated, function (req, res) {
         return({
         ...d.dataValues,
         isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(d.id),
-      })})
+      })}).reverse()
     }
 
     return res.render('following', {profile: user, user: helpers.getUser(req), selfUser: req.params.id == helpers.getUser(req).id})
   })
 })
 app.get('/users/:id/followers', authenticated, function (req, res) {
-  console.log('\n\n* 看見某一使用者的跟隨者')
+  // console.log('\n\n* 看見某一使用者的跟隨者')
   let UserId = helpers.getUser(req).id
   return User.findByPk(req.params.id, {include: [
     { model: Tweet },
@@ -172,31 +174,32 @@ app.get('/users/:id/followers', authenticated, function (req, res) {
       Follower: user.Follower.map(d => ({
         ...d.dataValues,
         isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(d.UserId),
-      }))
+      })).reverse()
     }
     return res.render('follower', {profile: user, user: helpers.getUser(req), selfUser: req.params.id == helpers.getUser(req).id})
   })
 })
 
 app.post('/followships', authenticated, function (req, res) {
-  console.log('\n\n* 新增一筆 followship 記錄')
-  console.log('userId => ', helpers.getUser(req).id, ', followingId => ', req.body.id)
+  // console.log('\n\n* 新增一筆 followship 記錄')
+  // console.log('userId => ', helpers.getUser(req).id, ', followingId => ', req.body.id)
   
   if(helpers.getUser(req).id == req.body.id)
     return res.send('error')
 
   Followship.create({
-    userId: helpers.getUser(req).id,
+    followerId: helpers.getUser(req).id,
     followingId: req.body.id,
   }).then(() => {
     return res.redirect('back')
   })
 })
+
 app.delete('/followships/:id', authenticated, function (req, res) {
-  console.log('\n\n* 刪除一筆 followship 記錄')
-  console.log('userId => ', helpers.getUser(req).id, ', followingId => ', req.params.id)
+  // console.log('\n\n* 刪除一筆 followship 記錄')
+  // console.log('userId => ', helpers.getUser(req).id, ', followingId => ', req.params.id)
   Followship.destroy({where: {
-    userId: helpers.getUser(req).id, 
+    followerId: helpers.getUser(req).id, 
     followingId: req.params.id
   }}).then((followship) => {
     return res.redirect(`back`)
@@ -204,7 +207,7 @@ app.delete('/followships/:id', authenticated, function (req, res) {
 })
 
 app.get('/users/:id/likes', authenticated, function (req, res) {
-  console.log('\n\n* 看見某一使用者按過 like 的推播')
+  // console.log('\n\n* 看見某一使用者按過 like 的推播')
   let UserId = helpers.getUser(req).id
   return User.findByPk(req.params.id, {include: [
     { model: Tweet },
@@ -232,7 +235,7 @@ app.get('/users/:id/likes', authenticated, function (req, res) {
 })
 
 app.post('/tweets/:id/likes', authenticated, function (req, res) {
-  console.log('\n\n* 新增一筆 like 記錄')
+  // console.log('\n\n* 新增一筆 like 記錄')
   Like.create({
     UserId: helpers.getUser(req).id,
     TweetId: req.params.id,
@@ -241,7 +244,7 @@ app.post('/tweets/:id/likes', authenticated, function (req, res) {
   })
 })
 app.post('/tweets/:id/unlike', authenticated, function (req, res) {
-  console.log('\n\n* 刪除一筆 like 記錄')
+  // console.log('\n\n* 刪除一筆 like 記錄')
   Like.destroy({where: {
     UserId: helpers.getUser(req).id, 
     TweetId: req.params.id
@@ -250,7 +253,7 @@ app.post('/tweets/:id/unlike', authenticated, function (req, res) {
   })
 })
 app.get('/users/:id/edit', authenticated, function (req, res) {
-  console.log(`\n\n* ${helpers.getUser(req).id} 編輯 ${req.params.id} 的介紹`)
+  // console.log(`\n\n* ${helpers.getUser(req).id} 編輯 ${req.params.id} 的介紹`)
   if(req.params.id != helpers.getUser(req).id)
     return res.redirect('/tweets')
   return User.findByPk(req.params.id, {include: [
@@ -259,7 +262,7 @@ app.get('/users/:id/edit', authenticated, function (req, res) {
   })
 })
 app.post('/users/:id/edit', authenticated, function (req, res) {
-  console.log('\n\n* 更新自己的介紹')
+  // console.log('\n\n* 更新自己的介紹')
 
   return User.findByPk(req.params.id)
     .then((user) => {
@@ -274,7 +277,7 @@ app.post('/users/:id/edit', authenticated, function (req, res) {
 })
 
 app.get('/admin/tweets', authenticated, function (req, res) {
-  console.log('\n\n* 看見站內所有的推播（設為後台首頁）')
+  // console.log('\n\n* 看見站內所有的推播（設為後台首頁）')
 
   if(helpers.getUser(req).role !== 'admin')
     return res.redirect('/tweets')
@@ -285,10 +288,9 @@ app.get('/admin/tweets', authenticated, function (req, res) {
     }))
     return res.render('admin/tweets', {user: helpers.getUser(req), tweets: tweets})
   })
-
 })
 app.delete('/admin/tweets/:id', authenticated, function (req, res) {
-  console.log('\n\n* 刪除其他使用者的推文')
+  // console.log('\n\n* 刪除其他使用者的推文')
 
   if(helpers.getUser(req).role !== 'admin')
     return res.redirect('/tweets')
@@ -303,7 +305,7 @@ app.delete('/admin/tweets/:id', authenticated, function (req, res) {
 })
 
 app.get('/admin/users', authenticated, function (req, res) {
-  console.log('\n\n* 看見站內所有的使用者')
+  // console.log('\n\n* 看見站內所有的使用者')
 
   if(helpers.getUser(req).role !== 'admin')
     return res.redirect('/tweets')

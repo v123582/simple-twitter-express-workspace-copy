@@ -7,19 +7,17 @@ module.exports = (sequelize, DataTypes) => {
     avatar: DataTypes.STRING,
     introduction: DataTypes.TEXT,
     role: DataTypes.STRING,
-    // follower_count: DataTypes.INTEGER,
-    // likes_count: DataTypes.INTEGER
   }, {});
   User.associate = function(models) {
     // associations can be defined here
     User.hasMany(models.Reply)
     User.hasMany(models.Tweet)
     User.hasMany(models.Like)
-    // User.hasMany(models.Followship)
+
     User.belongsToMany(User, {
       through: models.Followship,
       as: 'Following',
-      foreignKey: 'userId',
+      foreignKey: 'followerId',
     });
     User.belongsToMany(User, {
       through: models.Followship,
