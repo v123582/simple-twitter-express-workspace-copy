@@ -51,7 +51,7 @@ app.get('/tweets', authenticated, function (req, res) {
   // console.log('\n\n* 看見站內所有的推播，以及跟隨者最多的使用者（設為前台首頁）')
   const UserId = helpers.getUser(req).id
   return Tweet.findAll({include: [User, Reply, Like]}).then(tweets => {
-    User.findAll({include: {model: User, as: 'Follower'}}).then(users => {
+    User.findAll({include: {model: User, as: 'Followers'}}).then(users => {
     
       tweets = tweets.map(tweet => ({
         ...tweet.dataValues,
@@ -59,8 +59,8 @@ app.get('/tweets', authenticated, function (req, res) {
       }))
 
       users = users.map(user => ({
-        ...user.dataValues, FollowerCount: user.Follower.length,
-        isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(user.id),
+        ...user.dataValues, FollowerCount: user.Followers.length,
+        isFollowed: helpers.getUser(req).Followings.map(d => d.id).includes(user.id),
       }))
 
       users = users.sort((a,b) => b.FollowerCount - a.FollowerCount).slice(0, 3)
@@ -86,8 +86,8 @@ app.get('/tweets/:tweet_id/replies', authenticated, function (req, res) {
   return Tweet.findByPk(req.params.tweet_id, {include: [
     {model: User, include: [
       Tweet, Reply, Like,
-      { model: User, as: 'Follower' },
-      { model: User, as: 'Following' } 
+      { model: User, as: 'Followers' },
+      { model: User, as: 'Followings' } 
     ]},
     {model: Reply, include: [User]},
     Like,
@@ -98,7 +98,7 @@ app.get('/tweets/:tweet_id/replies', authenticated, function (req, res) {
       isLiked: tweet.Likes.map(l => l.UserId).includes(UserId),
       User: {
         ...tweet.User.dataValues,
-        isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(tweet.UserId),
+        isFollowed: helpers.getUser(req).Followings.map(d => d.id).includes(tweet.UserId),
       }
     }
 
@@ -120,14 +120,14 @@ app.get('/users/:id/tweets', authenticated, function (req, res) {
   const UserId = helpers.getUser(req).id
   return User.findByPk(req.params.id, {include: [
     { model: Tweet, include: [User, Reply, Like]},
-    { model: User, as: 'Follower' },
-    { model: User, as: 'Following' }, 
+    { model: User, as: 'Followers' },
+    { model: User, as: 'Followings' }, 
     Like
   ]}).then(user => {
     
     user = {
       ...user.dataValues,
-      isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(user.id),
+      isFollowed: helpers.getUser(req).Followings.map(d => d.id).includes(user.id),
     }
 
     user.Tweets = user.Tweets.map(tweet => ({
@@ -142,17 +142,17 @@ app.get('/users/:id/followings', authenticated, function (req, res) {
   // console.log('\n\n* 看見某一使用者正在關注的使用者')
   return User.findByPk(req.params.id, {include: [
     { model: Tweet },
-    { model: User, as: 'Follower', order: 'createdAt asc' },
-    { model: User, as: 'Following', order: 'createdAt asc' }, 
+    { model: User, as: 'Followers', order: 'createdAt asc' },
+    { model: User, as: 'Followings', order: 'createdAt asc' }, 
     Like
   ]}).then(user => {
     user = {
       ...user.dataValues,
-      isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(user.id),
-      Following: user.Following.map(d => {
+      isFollowed: helpers.getUser(req).Followings.map(d => d.id).includes(user.id),
+      Following: user.Followings.map(d => {
         return({
         ...d.dataValues,
-        isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(d.id),
+        isFollowed: helpers.getUser(req).Followings.map(d => d.id).includes(d.id),
       })}).reverse()
     }
 
@@ -164,16 +164,16 @@ app.get('/users/:id/followers', authenticated, function (req, res) {
   let UserId = helpers.getUser(req).id
   return User.findByPk(req.params.id, {include: [
     { model: Tweet },
-    { model: User, as: 'Follower', include: {model: User, as: 'Follower'} },
-    { model: User, as: 'Following' }, 
+    { model: User, as: 'Followers', include: {model: User, as: 'Followers'} },
+    { model: User, as: 'Followings' }, 
     Like
   ]}).then(user => {
     user = {
       ...user.dataValues,
-      isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(user.id),
-      Follower: user.Follower.map(d => ({
+      isFollowed: helpers.getUser(req).Followings.map(d => d.id).includes(user.id),
+      Followers: user.Followers.map(d => ({
         ...d.dataValues,
-        isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(d.UserId),
+        isFollowed: helpers.getUser(req).Followings.map(d => d.id).includes(d.UserId),
       })).reverse()
     }
     return res.render('follower', {profile: user, user: helpers.getUser(req), selfUser: req.params.id == helpers.getUser(req).id})
@@ -211,8 +211,8 @@ app.get('/users/:id/likes', authenticated, function (req, res) {
   let UserId = helpers.getUser(req).id
   return User.findByPk(req.params.id, {include: [
     { model: Tweet },
-    { model: User, as: 'Follower' },
-    { model: User, as: 'Following' }, 
+    { model: User, as: 'Followers' },
+    { model: User, as: 'Followings' }, 
     { model: Like, include: {model: Tweet, include: [User, Like, Reply]}}
   ]}).then(user => {
 
@@ -220,7 +220,7 @@ app.get('/users/:id/likes', authenticated, function (req, res) {
 
     user = {
       ...user.dataValues,
-      isFollowed: helpers.getUser(req).Following.map(d => d.id).includes(user.id),
+      isFollowed: helpers.getUser(req).Followings.map(d => d.id).includes(user.id),
     }
 
     user.Likes = user.Likes.map(d => ({
@@ -234,7 +234,7 @@ app.get('/users/:id/likes', authenticated, function (req, res) {
   })
 })
 
-app.post('/tweets/:id/likes', authenticated, function (req, res) {
+app.post('/tweets/:id/like', authenticated, function (req, res) {
   // console.log('\n\n* 新增一筆 like 記錄')
   Like.create({
     UserId: helpers.getUser(req).id,
@@ -312,8 +312,8 @@ app.get('/admin/users', authenticated, function (req, res) {
 
   return User.findAll({include: [
     { model: Tweet },
-    { model: User, as: 'Follower' },
-    { model: User, as: 'Following' }, 
+    { model: User, as: 'Followers' },
+    { model: User, as: 'Followings' }, 
     { model: Like, include: {model: Tweet, include: [User, Like, Reply]}}
   ]}).then(users => {
     return res.render('admin/users', {user: helpers.getUser(req), users: users})

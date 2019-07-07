@@ -29,8 +29,8 @@ passport.deserializeUser((id, cb) => {
         { model: db.Reply },
         { model: db.Tweet },
         { model: db.Like },
-        { model: User, as: 'Follower' },
-        { model: User, as: 'Following' }
+        { model: User, as: 'Followers' },
+        { model: User, as: 'Followings' }
       ]
     }).then(user => {
     return cb(null, user)
